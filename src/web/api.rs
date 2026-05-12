@@ -28,6 +28,7 @@ pub fn api_routes(
     let put_settings = api_put_settings(state.clone());
     let browse = api_browse();
     let chat = api_chat(state);
+    let shutdown = api_shutdown();
 
     start
         .or(stop)
@@ -44,6 +45,7 @@ pub fn api_routes(
         .or(get_settings)
         .or(browse)
         .or(chat)
+        .or(shutdown)
 }
 
 fn api_start(
@@ -459,4 +461,25 @@ fn api_chat(
                 }
             },
         )
+}
+
+fn api_shutdown() -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("api" / "shutdown")
+        .and(warp::post())
+        .and_then(move || {
+            async move {
+                // Run shutdown in a blocking thread — the process will not return after this
+                tokio::task::spawn_blocking(|| {
+                    let _ = std::process::Command::new("sudo")
+                        .arg("shutdown")
+                        .arg("now")
+                        .status();
+                });
+
+                // Return immediately — the OS is shutting down
+                Ok::<_, warp::Rejection>(warp::reply::json(
+                    &serde_json::json!({"ok": true, "message": "shutdown initiated"}),
+                ))
+            }
+        })
 }

@@ -358,10 +358,14 @@ document.getElementById('preset-modal').addEventListener('click', e => {
 
 // Close modals on Escape key
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && document.getElementById('config-modal').classList.contains('open')) {
-        closeConfigModal();
-    } else if (e.key === 'Escape' && document.getElementById('preset-modal').classList.contains('open')) {
-        closePresetModal();
+    if (e.key === 'Escape') {
+        if (document.getElementById('config-modal').classList.contains('open')) {
+            closeConfigModal();
+        } else if (document.getElementById('preset-modal').classList.contains('open')) {
+            closePresetModal();
+        } else if (document.getElementById('shutdown-modal').classList.contains('open')) {
+            closeShutdownModal();
+        }
     }
 });
 
@@ -599,6 +603,42 @@ async function doStart() {
 async function doStop() {
     document.getElementById('btn-stop').disabled = true;
     await fetch('/api/stop', { method: 'POST' });
+}
+
+async function doShutdown() {
+    openShutdownModal();
+}
+
+function openShutdownModal() {
+    document.getElementById('shutdown-modal').classList.add('open');
+}
+
+function closeShutdownModal() {
+    document.getElementById('shutdown-modal').classList.remove('open');
+}
+
+document.getElementById('shutdown-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeShutdownModal();
+});
+
+async function confirmShutdown() {
+    closeShutdownModal();
+
+    const btn = document.getElementById('btn-shutdown');
+    try {
+        const resp = await fetch('/api/shutdown', { method: 'POST' });
+        if (resp.ok) {
+            showToast('Shutdown initiated...', 'warn');
+            btn.disabled = true;
+        } else {
+            const data = await resp.json().catch(() => null);
+            showToast('Shutdown failed: ' + (data?.error || data?.message || 'unknown'), 'error');
+            btn.disabled = false;
+        }
+    } catch (err) {
+        showToast('Shutdown error: ' + err.message, 'error');
+        btn.disabled = false;
+    }
 }
 
 // WebSocket
