@@ -423,10 +423,6 @@ async function savePreset(event) {
         document.getElementById('modal-name').classList.add('field-error');
         valid = false;
     }
-    if (!preset.model_path) {
-        document.getElementById('modal-model-path').classList.add('field-error');
-        valid = false;
-    }
     if (!valid) {
         showToast('Please fill in all required fields', 'error');
         return;
@@ -586,10 +582,7 @@ function getConfig() {
 
 async function doStart() {
     const config = getConfig();
-    if (!config.model_path) {
-        showToast('No model path set. Edit the preset to select a model.', 'error');
-        return;
-    }
+
     document.getElementById('btn-start').disabled = true;
     const resp = await fetch('/api/start', {
         method: 'POST',

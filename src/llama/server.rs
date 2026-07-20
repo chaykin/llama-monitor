@@ -68,10 +68,7 @@ pub async fn start_server(
     app_config: &AppConfig,
 ) -> Result<()> {
     // Validate model path before starting
-    if config.model_path.is_empty() {
-        anyhow::bail!("Model path is empty. Edit the preset and set a model path.");
-    }
-    if !std::path::Path::new(&config.model_path).exists() {
+    if !config.model_path.is_empty() && !std::path::Path::new(&config.model_path).exists() {
         anyhow::bail!("Model file not found: {}", config.model_path);
     }
 
@@ -111,9 +108,12 @@ pub async fn start_server(
     }
 
     // Build args — model & core
-    cmd.arg("-m").arg(&config.model_path);
-    cmd.arg("-ngl")
-        .arg(config.gpu_layers.unwrap_or(99).to_string());
+    if !config.model_path.is_empty() {
+        cmd.arg("-m").arg(&config.model_path);
+    }
+
+    //cmd.arg("-ngl")
+    //    .arg(config.gpu_layers.unwrap_or(99).to_string());
     cmd.arg("-ctk").arg(&config.ctk);
     cmd.arg("-ctv").arg(&config.ctv);
     cmd.arg("--host").arg("0.0.0.0");
